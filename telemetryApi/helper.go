@@ -2,6 +2,7 @@ package telemetryApi
 
 import (
 	"encoding/base64"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -35,8 +36,13 @@ func StoreLogs(loggingClient logging.Client, logEntries []interface{}) (*logging
 // creates a HSP LogEvent record from the message
 func CreateLoggingResource(hsdpLogFormattedMessage string, timeStamp string) (logging.Resource, error) {
 	// hsdp logformat.
+	//Extract information from HSPD console format
+	// <<LogCategory>>.<<Severity>>|CustomLogEvent|{TransactionId}|{TraceId}|{spanId}|{ComponentName}|<message> .
 	items := strings.Split(hsdpLogFormattedMessage, "|")
 	subItems := strings.Split(items[0], ".")
+
+	lambdaFunctionName := os.Getenv("AWS_LAMBDA_FUNCTION_NAME")
+	lambdaFunctionVersion := os.Getenv("AWS_LAMBDA_FUNCTION_VERSION")
 
 	var logResource = logging.Resource{
 		ID:                  uuid.New().String(),
@@ -46,9 +52,9 @@ func CreateLoggingResource(hsdpLogFormattedMessage string, timeStamp string) (lo
 		Category:            subItems[0],
 		Component:           items[5],
 		TransactionID:       items[2],
-		ServiceName:         "From AWS_LAMBDA_FUNCTION_NAME environment variable",
+		ServiceName:         lambdaFunctionName,
 		ApplicationInstance: items[5],
-		ApplicationVersion:  "From AWS_LAMBDA_FUNCTION_NAME environment variable",
+		ApplicationVersion:  lambdaFunctionVersion,
 		OriginatingUser:     "Ross",
 		ServerName:          "AWS Lambda",
 		LogTime:             timeStamp,
