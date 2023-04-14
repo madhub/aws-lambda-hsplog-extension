@@ -116,8 +116,8 @@ type SubscribeResponse struct {
 // Subscribes to the Telemetry API to start receiving the log events
 func (c *Client) Subscribe(ctx context.Context, extensionId string, listenerUri string) (*SubscribeResponse, error) {
 	eventTypes := []EventType{
-		Platform,
-		// Function,
+		//Platform,
+		Function, // only subscribe from logs from lambda function execution
 		// Extension,
 	}
 
