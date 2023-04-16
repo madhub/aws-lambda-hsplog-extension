@@ -13,11 +13,15 @@ import (
 	"github.com/philips-software/go-hsdp-api/logging"
 )
 
+const maxLogBatchSize int = 25
+
 type Dispatcher struct {
 	//	httpClient       *http.Client
-	hspLoggingClient *logging.Client
-	postUri          string
-	minBatchSize     int64
+	hspLoggingClient      *logging.Client
+	lambdaFunctionName    string
+	lambdaFunctionVersion string
+	postUri               string
+	minBatchSize          int64
 }
 
 func NewDispatcher() *Dispatcher {
@@ -42,6 +46,16 @@ func NewDispatcher() *Dispatcher {
 		panic("sharedSecret undefined")
 	}
 
+	lambdaFunctionName := os.Getenv("AWS_LAMBDA_FUNCTION_NAME")
+	if len(lambdaFunctionName) == 0 {
+		panic("lambdaFunctionName undefined")
+	}
+
+	lambdaFunctionVersion := os.Getenv("AWS_LAMBDA_FUNCTION_VERSION")
+	if len(lambdaFunctionVersion) == 0 {
+		panic("lambdaFunctionVersion undefined")
+	}
+
 	dispatchMinBatchSize, err := strconv.ParseInt(os.Getenv("DISPATCH_MIN_BATCH_SIZE"), 0, 16)
 	if err != nil {
 		dispatchMinBatchSize = 1
@@ -63,14 +77,18 @@ func NewDispatcher() *Dispatcher {
 
 func (d *Dispatcher) Dispatch(ctx context.Context, logEventsQueue *queue.Queue, force bool) {
 	if !logEventsQueue.Empty() && (force || logEventsQueue.Len() >= d.minBatchSize) {
+
 		l.Info("[dispatcher:Dispatch] Dispatching", logEventsQueue.Len(), "log events")
 		logEntries, _ := logEventsQueue.Get(logEventsQueue.Len())
-		// store log entries into HSP Logging service
-		_, err := StoreLogs(*d.hspLoggingClient, logEntries)
-		if err != nil {
-			l.Error("[dispatcher:Dispatch] Failed to dispatch, returning to queue:", err)
-			for logEntry := range logEntries {
-				logEventsQueue.Put(logEntry)
+		// store logs in batches of 25 ( HSDP API log restriction )
+		logsBatch := CreateLogBatchChunks(logEntries, maxLogBatchSize)
+		for _, logEntriesBatch := range logsBatch {
+			_, err := StoreLogs(*d.hspLoggingClient, d.lambdaFunctionName, d.lambdaFunctionVersion, logEntriesBatch)
+			if err != nil {
+				l.Error("[dispatcher:Dispatch] Failed to dispatch, returning to queue:", err)
+				for logEntry := range logEntriesBatch {
+					logEventsQueue.Put(logEntry)
+				}
 			}
 		}
 
