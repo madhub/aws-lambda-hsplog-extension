@@ -33,6 +33,15 @@ import (
 var l = log.WithFields(log.Fields{"pkg": "main"})
 
 func main() {
+	// enable/disable verbose logging from environment variable
+	logLevel := log.ErrorLevel
+	verboseLogging := os.Getenv("ENABLE_VERBOSE_LOGGING")
+	if len(verboseLogging) == 0 {
+		logLevel = log.InfoLevel
+	}
+
+	l.Logger.SetLevel(logLevel)
+
 	l.Info("[main] Starting the Telemetry API extension")
 	extensionName := path.Base(os.Args[0])
 

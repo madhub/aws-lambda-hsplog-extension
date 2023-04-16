@@ -52,3 +52,5 @@ Configure the extension by setting below environment variables
 * `SHARED_KEY` - Logging shared key
 * `SECRET_KEY`-  Logging secret key
 
+### Optional environment variables
+* `ENABLE_VERBOSE_LOGGING` - setting this value to **true** logs the all of the logs from  **info level & above**

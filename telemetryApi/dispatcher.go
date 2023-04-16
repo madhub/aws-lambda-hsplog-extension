@@ -51,11 +51,6 @@ func NewDispatcher() *Dispatcher {
 		panic("lambdaFunctionName undefined")
 	}
 
-	lambdaFunctionVersion := os.Getenv("AWS_LAMBDA_FUNCTION_VERSION")
-	if len(lambdaFunctionVersion) == 0 {
-		panic("lambdaFunctionVersion undefined")
-	}
-
 	dispatchMinBatchSize, err := strconv.ParseInt(os.Getenv("DISPATCH_MIN_BATCH_SIZE"), 0, 16)
 	if err != nil {
 		dispatchMinBatchSize = 1
@@ -68,7 +63,9 @@ func NewDispatcher() *Dispatcher {
 
 	return &Dispatcher{
 		//		httpClient:       &http.Client{},
-		hspLoggingClient: client,
+		hspLoggingClient:      client,
+		lambdaFunctionName:    lambdaFunctionName,
+		lambdaFunctionVersion: "1.0",
 		//		postUri:          dispatchPostUri,
 		minBatchSize: dispatchMinBatchSize,
 	}
