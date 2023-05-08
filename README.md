@@ -1,6 +1,10 @@
 # aws-lambda-hsplog-extension
 Lambda extension to push function logs directly to a HSP Logging service
 
+
+![image](https://user-images.githubusercontent.com/8907962/236732860-46f165f6-0ca1-4a66-a8ff-8d116c7dc702.png)
+
+
 ## Build package and dependencies
 
 To run this example, you will need to ensure that your build architecture matches that of the Lambda execution environment by compiling with `GOOS=linux` and `GOARCH=amd64` if you are not running in a Linux environment.
